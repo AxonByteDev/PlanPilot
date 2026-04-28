@@ -115,25 +115,23 @@ def _claude_cmd():
             if os.path.isfile(path):
                 return ["cmd", "/c", path]
     else:
-        # Erst PATH aus dem Login-Shell laden (macOS startet Apps ohne .zshrc/.bashrc)
-        try:
-            login_path = subprocess.check_output(
-                [os.environ.get("SHELL", "/bin/zsh"), "-l", "-c", "echo $PATH"],
-                stderr=subprocess.DEVNULL, timeout=5, text=True,
-            ).strip()
-            if login_path:
-                os.environ["PATH"] = login_path + ":" + os.environ.get("PATH", "")
-        except Exception:
-            pass
-
-        found = shutil.which("claude")
+        # Auf macOS/Linux: GUI-Apps erben nicht den vollen Shell-PATH.
+        # Daher bekannte npm/Homebrew-Verzeichnisse explizit ergänzen.
+        extra = os.pathsep.join([
+            "/opt/homebrew/bin",                        # macOS Apple Silicon
+            "/usr/local/bin",                           # macOS Intel
+            os.path.expanduser("~/.local/bin"),
+            os.path.expanduser("~/.npm-global/bin"),
+        ])
+        search_path = extra + os.pathsep + os.environ.get("PATH", "")
+        found = shutil.which("claude", path=search_path)
         if found:
             return [found]
 
         for path in (
-            os.path.expanduser("~/.local/bin/claude"),   # Linux
-            "/opt/homebrew/bin/claude",                  # macOS Apple Silicon (Homebrew)
-            "/usr/local/bin/claude",                     # macOS Intel (Homebrew)
+            "/opt/homebrew/bin/claude",
+            "/usr/local/bin/claude",
+            os.path.expanduser("~/.local/bin/claude"),
             os.path.expanduser("~/.npm-global/bin/claude"),
             "/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/bin/claude",
             "/usr/local/lib/node_modules/@anthropic-ai/claude-code/bin/claude",
@@ -144,6 +142,14 @@ def _claude_cmd():
 
 @app.route("/api/ai-plan", methods=["POST"])
 def api_ai_plan():
+  try:
+    return _ai_plan_inner()
+  except Exception as e:
+    import traceback
+    traceback.print_exc()
+    return jsonify({"error": f"{type(e).__name__}: {e}"}), 500
+
+def _ai_plan_inner():
     user_prompt = (request.json or {}).get("prompt", "").strip()
     if not user_prompt:
         return jsonify({"error": "Kein Prompt angegeben"}), 400
