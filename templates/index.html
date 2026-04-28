@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Projektplan – Rießelmann</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="logo">▦</span>
+    <div>
+      <div class="header-title">Projektplan – Rießelmann</div>
+      <div class="header-sub" id="statsBar">Lädt…</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="view-toggle">
+      <button class="btn-view active" id="btnKanban" onclick="setView('kanban')">Kanban</button>
+      <button class="btn-view" id="btnTable"  onclick="setView('table')">Tabelle</button>
+    </div>
+    <select id="filterPriority" onchange="applyFilters()" class="filter-select">
+      <option value="">Alle Prioritäten</option>
+      <option value="sofort">🔴 Sofort</option>
+      <option value="kurzfristig">🟡 Kurzfristig</option>
+      <option value="mittelfristig">🔵 Mittelfristig</option>
+      <option value="langfristig">🟢 Langfristig</option>
+    </select>
+    <select id="filterStatus" onchange="applyFilters()" class="filter-select">
+      <option value="aktiv" selected>Aktive (ohne Erledigt)</option>
+      <option value="">Alle Status</option>
+      <option value="offen">Offen</option>
+      <option value="laufend">Laufend</option>
+      <option value="erledigt">Erledigt</option>
+      <option value="pausiert">Pausiert</option>
+    </select>
+    <input type="search" id="searchInput" class="filter-select" placeholder="Suchen…" oninput="applyFilters()">
+    <button class="btn-action" onclick="openNewTask()">+ Aufgabe</button>
+    <button class="btn-ki" onclick="openKiModal()">✨ KI-Planung</button>
+    <a href="/export/excel" class="btn-export">Excel</a>
+    <a href="/print" target="_blank" class="btn-export">PDF</a>
+  </div>
+</header>
+
+<!-- KANBAN -->
+<div id="kanbanView" class="kanban-board">
+  <div class="kanban-col" data-priority="sofort">
+    <div class="col-header sofort-header">
+      <span>🔴 Sofort</span><span class="col-count" id="cnt-sofort">0</span>
+    </div>
+    <div class="card-list" id="list-sofort"></div>
+  </div>
+  <div class="kanban-col" data-priority="kurzfristig">
+    <div class="col-header kurz-header">
+      <span>🟡 Kurzfristig</span><span class="col-count" id="cnt-kurzfristig">0</span>
+    </div>
+    <div class="card-list" id="list-kurzfristig"></div>
+  </div>
+  <div class="kanban-col" data-priority="mittelfristig">
+    <div class="col-header mittel-header">
+      <span>🔵 Mittelfristig</span><span class="col-count" id="cnt-mittelfristig">0</span>
+    </div>
+    <div class="card-list" id="list-mittelfristig"></div>
+  </div>
+  <div class="kanban-col" data-priority="langfristig">
+    <div class="col-header lang-header">
+      <span>🟢 Langfristig</span><span class="col-count" id="cnt-langfristig">0</span>
+    </div>
+    <div class="card-list" id="list-langfristig"></div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div id="tableView" class="table-wrap hidden">
+  <table class="task-table">
+    <thead>
+      <tr>
+        <th style="width:40px">#</th>
+        <th>Aufgabe</th>
+        <th style="width:140px">Priorität</th>
+        <th style="width:100px">Aufwand</th>
+        <th style="width:140px">Zuständig</th>
+        <th style="width:120px">Status</th>
+        <th style="width:100px">Fortschritt</th>
+        <th style="width:60px"></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div id="modalOverlay" class="modal-overlay hidden" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="modalNr" class="modal-nr">#–</span>
+      <input type="text" id="modalTitle" class="modal-title-input" placeholder="Aufgabentitel">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-row">
+        <div class="field-group">
+          <label>Priorität</label>
+          <select id="modalPriority" class="modal-select">
+            <option value="sofort">🔴 Sofort</option>
+            <option value="kurzfristig">🟡 Kurzfristig</option>
+            <option value="mittelfristig">🔵 Mittelfristig</option>
+            <option value="langfristig">🟢 Langfristig</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Status</label>
+          <select id="modalStatus" class="modal-select">
+            <option value="offen">Offen</option>
+            <option value="laufend">Laufend</option>
+            <option value="erledigt">Erledigt</option>
+            <option value="pausiert">Pausiert</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Gesamtaufwand</label>
+          <input type="text" id="modalAufwand" class="modal-input modal-aufwand-computed" readonly placeholder="– (aus Schritten)">
+        </div>
+        <div class="field-group">
+          <label>Zuständig</label>
+          <input type="text" id="modalAssignee" class="modal-input" placeholder="Name / Abteilung">
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-top:12px">
+        <label>Abhängigkeiten</label>
+        <input type="text" id="modalDeps" class="modal-input" placeholder="z. B. Nr. 3, 5">
+      </div>
+
+      <div class="field-group" style="margin-top:12px">
+        <label>Notizen</label>
+        <textarea id="modalNotes" class="modal-textarea" rows="3" placeholder="Zusätzliche Informationen…"></textarea>
+      </div>
+
+      <!-- Steps -->
+      <div class="steps-section">
+        <div class="steps-header">
+          <span>Schritte</span>
+          <button class="btn-add-step" onclick="addStepRow()">+ Schritt</button>
+        </div>
+        <div id="stepsList"></div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-danger" onclick="deleteCurrentTask()">Löschen</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn-primary" onclick="saveTask()">Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KI-Modal -->
+<div id="kiOverlay" class="modal-overlay hidden" onclick="closeKiOnBg(event)">
+  <div class="ki-modal">
+    <div class="ki-header">
+      <span class="ki-icon">✨</span>
+      <span class="ki-title">Aufgabe mit KI planen</span>
+      <button class="modal-close" onclick="closeKiModal()">✕</button>
+    </div>
+    <div class="ki-body">
+      <label class="ki-label">Beschreibe die Aufgabe – so viel oder wenig wie du möchtest:</label>
+      <textarea id="kiPrompt" class="ki-textarea"
+        placeholder="Beispiele:&#10;• Wir brauchen einen neuen Drucker im Lager Dinklage&#10;• E-Mail von Kunde XY: Preisliste für Bewässerung bis Ende Mai&#10;• Serverraum Busse aufräumen und Kabelmanagement verbessern"
+        onkeydown="kiEnterSubmit(event)"></textarea>
+      <div id="kiError" class="ki-error hidden"></div>
+    </div>
+    <div class="ki-footer">
+      <button class="btn-secondary" onclick="closeKiModal()">Abbrechen</button>
+      <button class="btn-ki-analyze" id="btnAnalyze" onclick="analyzeWithKi()">
+        <span id="analyzeLabel">Analysieren →</span>
+        <span id="analyzeSpinner" class="spinner hidden"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

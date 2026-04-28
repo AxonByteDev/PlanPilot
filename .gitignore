@@ -1,0 +1,42 @@
+# ── Datenbank (private Daten – NIEMALS committen) ────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ── Virtuelle Umgebungen ──────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+
+# ── Benutzerspezifische Launcher (generiert oder hardcodierte Pfade) ──────────
+start.vbs
+AufgabenPlanung.exe
+start_app.bat
+start_app.command
+
+# ── Betriebssystem ────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+desktop.ini
+
+# ── IDE / Editor ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+
+# ── Temporäre Dateien ─────────────────────────────────────────────────────────
+*.tmp
+*.bak
