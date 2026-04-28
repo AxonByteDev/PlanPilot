@@ -111,10 +111,29 @@ def _claude_cmd():
             if os.path.isfile(path):
                 return ["cmd", "/c", path]
     else:
+        # Erst PATH aus dem Login-Shell laden (macOS startet Apps ohne .zshrc/.bashrc)
+        try:
+            login_path = subprocess.check_output(
+                [os.environ.get("SHELL", "/bin/zsh"), "-l", "-c", "echo $PATH"],
+                stderr=subprocess.DEVNULL, timeout=5, text=True,
+            ).strip()
+            if login_path:
+                os.environ["PATH"] = login_path + ":" + os.environ.get("PATH", "")
+        except Exception:
+            pass
+
         found = shutil.which("claude")
         if found:
             return [found]
-        for path in (os.path.expanduser("~/.local/bin/claude"), "/usr/local/bin/claude"):
+
+        for path in (
+            os.path.expanduser("~/.local/bin/claude"),   # Linux
+            "/opt/homebrew/bin/claude",                  # macOS Apple Silicon (Homebrew)
+            "/usr/local/bin/claude",                     # macOS Intel (Homebrew)
+            os.path.expanduser("~/.npm-global/bin/claude"),
+            "/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/bin/claude",
+            "/usr/local/lib/node_modules/@anthropic-ai/claude-code/bin/claude",
+        ):
             if os.path.isfile(path):
                 return [path]
     return None
