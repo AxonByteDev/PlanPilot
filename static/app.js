@@ -451,7 +451,16 @@ async function analyzeWithKi() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({prompt}),
     });
-    const data = await res.json();
+
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (_) {
+      errBox.textContent = 'Serverfehler (kein JSON): ' + text.slice(0, 300);
+      errBox.classList.remove('hidden');
+      return;
+    }
 
     if (!res.ok || data.error) {
       errBox.textContent = data.error || 'Unbekannter Fehler';
