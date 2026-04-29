@@ -2,7 +2,8 @@ import sqlite3, os
 from contextlib import contextmanager
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "projektplan.db")
+_data_dir = os.environ.get("PLANPILOT_DATA_DIR") or os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(_data_dir, "projektplan.db")
 
 PRIORITY_ORDER = {"sofort": 1, "kurzfristig": 2, "mittelfristig": 3, "langfristig": 4}
 

@@ -1,0 +1,64 @@
+{
+  "name": "planpilot",
+  "version": "1.0.0",
+  "description": "KI-gestütztes Aufgabenmanagement für Rießelmann",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "prepare-python": "node scripts/prepare-python.js",
+    "build": "npm run prepare-python && electron-builder --win",
+    "build:dir": "npm run prepare-python && electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^33.3.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "net.riesselmann.planpilot",
+    "productName": "PlanPilot",
+    "copyright": "Copyright © 2026 Rießelmann",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/main.js"
+    ],
+    "extraResources": [
+      {
+        "from": "python-embed",
+        "to": "python",
+        "filter": ["**/*"]
+      },
+      {
+        "from": ".",
+        "to": "app",
+        "filter": [
+          "app.py",
+          "db.py",
+          "export.py",
+          "seed.py",
+          "templates/**/*",
+          "static/**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PlanPilot",
+      "uninstallDisplayName": "PlanPilot – Aufgabenmanagement",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

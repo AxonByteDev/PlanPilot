@@ -1,4 +1,7 @@
-import webbrowser, threading, os, subprocess, re, json, shutil, tempfile
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import webbrowser, threading, subprocess, re, json, shutil, tempfile
 from datetime import datetime
 from flask import Flask, jsonify, request, render_template, send_file, abort
 import db as DB
@@ -283,6 +286,7 @@ def print_view():
 if __name__ == "__main__":
     port = 5757
     url  = f"http://127.0.0.1:{port}"
-    threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+    if not os.environ.get("PLANPILOT_NO_BROWSER"):
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
     print(f"\n  Projektplan läuft auf {url}\n  Strg+C zum Beenden\n")
     app.run(port=port, debug=False)
